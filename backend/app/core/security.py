@@ -19,16 +19,15 @@ class TokenData(BaseModel):
 
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
-    """Verifica senha em texto plano contra hash bcrypt."""
-    trimmed_password = plain_password[:72]
-    return pwd_context.verify(trimmed_password, hashed_password)
+    plain_password = plain_password or ""
+    trimmed = plain_password[:72]
+    return pwd_context.verify(trimmed, hashed_password)
 
 
 def get_password_hash(password: str) -> str:
-    """Gera hash bcrypt da senha, truncando para 72 bytes (limite do bcrypt)."""
-    trimmed_password = password[:72]
-    return pwd_context.hash(trimmed_password)
-
+    password = password or ""
+    trimmed = password[:72]
+    return pwd_context.hash(trimmed)
 
 
 

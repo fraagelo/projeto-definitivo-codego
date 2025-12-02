@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "./AuthContext";
 import { LoginPage } from "./pages/LoginPage";
 import { DashboardPage } from "./pages/DashboardPage";
@@ -9,7 +9,6 @@ import { Layout } from "./Layout";
 function App() {
   return (
     <AuthProvider>
-      <BrowserRouter>
         <Layout>
           <Routes>
             <Route path="/" element={<Navigate to="/login" replace />} />
@@ -23,7 +22,6 @@ function App() {
             <Route path="*" element={<Navigate to="/login" replace />} />
           </Routes>
         </Layout>
-      </BrowserRouter>
     </AuthProvider>
   );
 }

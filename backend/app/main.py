@@ -108,6 +108,15 @@ def get_dashboard(current_user: UserModel = Depends(get_current_user)):
     }
 
 
+@app.get("/me")
+def get_current_user_profile(current_user: UserModel = Depends(get_current_user)):
+    return {
+        "id": current_user.id,
+        "email": current_user.email,
+        "full_name": current_user.full_name
+    }
+
+
 from pydantic import BaseModel
 
 
