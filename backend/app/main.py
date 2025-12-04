@@ -5,7 +5,7 @@ from app.db.auth_db import get_auth_db
 from sqlalchemy.orm import Session
 from sqlalchemy import text
 from app.models.user import User as UserModel
-from app.schemas.user import UserCreate, LoginRequest, Token
+from app.schemas.user import UserCreate, LoginRequest, Token, UserResponse
 from app.core.security import get_password_hash, verify_password, create_access_token
 from jose import JWTError, jwt
 from fastapi import HTTPException, status
@@ -18,10 +18,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI(title=settings.app_name)
 
-origins = [
-    "http://127.0.0.1:5173",
-    "http://localhost:5173",
-]
+origins = settings.allowed_origins
 
 app.add_middleware(
     CORSMiddleware,
@@ -108,13 +105,9 @@ def get_dashboard(current_user: UserModel = Depends(get_current_user)):
     }
 
 
-@app.get("/me")
+@app.get("/me", response_model=UserResponse)
 def get_current_user_profile(current_user: UserModel = Depends(get_current_user)):
-    return {
-        "id": current_user.id,
-        "email": current_user.email,
-        "full_name": current_user.full_name
-    }
+    return current_user
 
 
 from pydantic import BaseModel
