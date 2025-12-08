@@ -13,7 +13,15 @@ from datetime import timedelta
 from app.core.security import ACCESS_TOKEN_EXPIRE_MINUTES
 from app.core.security import get_current_user
 from fastapi.middleware.cors import CORSMiddleware
-
+from app.models.municipal_lot import MunicipalLot
+from app.schemas.municipal_lot import (
+    MunicipalLotResponse,
+    MunicipalLotUpdate,
+)
+from app.core.security import get_current_user
+from app.db.auth_db import get_auth_db
+from sqlalchemy.orm import Session
+from fastapi import Depends, HTTPException
 
 
 app = FastAPI(title=settings.app_name)
@@ -127,3 +135,33 @@ def test_token(body: TokenInput):
         return {"valid": True, "payload": payload}
     except Exception as e:
         return {"valid": False, "error": str(e)}
+
+@app.get("/lots/{lot_id}", response_model=MunicipalLotResponse)
+def get_lot(
+    lot_id: int,
+    db: Session = Depends(get_auth_db),
+    current_user=Depends(get_current_user),
+):
+    lot = db.query(MunicipalLot).filter(MunicipalLot.id == lot_id).first()
+    if not lot:
+        raise HTTPException(status_code=404, detail="Registro não encontrado")
+    return lot
+
+@app.put("/lots/{lot_id}", response_model=MunicipalLotResponse)
+def update_lot(
+    lot_id: int,
+    lot_in: MunicipalLotUpdate,
+    db: Session = Depends(get_auth_db),
+    current_user=Depends(get_current_user),
+):
+    lot = db.query(MunicipalLot).filter(MunicipalLot.id == lot_id).first()
+    if not lot:
+        raise HTTPException(status_code=404, detail="Registro não encontrado")
+
+    for field, value in lot_in.model_dump(exclude_unset=True).items():
+        setattr(lot, field, value)
+
+    db.add(lot)
+    db.commit()
+    db.refresh(lot)
+    return lot

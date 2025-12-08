@@ -5,6 +5,7 @@ import { DashboardPage } from "./pages/DashboardPage";
 import { RegisterPage } from "./pages/RegisterPage";
 import { ProtectedRoute } from "./ProtectedRoute";
 import { Layout } from "./Layout";
+import { LotEditPage } from "./pages/LotEditPage";
 
 function App() {
   return (
@@ -16,6 +17,7 @@ function App() {
             <Route path="/register" element={<RegisterPage />} />
 
             <Route element={<ProtectedRoute />}>
+              <Route path="/lots/:id/edit" element={<LotEditPage />} />
               <Route path="/dashboard" element={<DashboardPage />} />
             </Route>
 
