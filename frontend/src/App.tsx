@@ -6,6 +6,9 @@ import { RegisterPage } from "./pages/RegisterPage";
 import { ProtectedRoute } from "./ProtectedRoute";
 import { Layout } from "./Layout";
 import { LotEditPage } from "./pages/LotEditPage";
+import { LotCreatePage } from "./pages/LotCreatePage";
+import { LotSelectPage } from "./pages/LotSelectPage";
+import { DistrictSelectPage } from "./pages/DistrictSelectPage";
 
 function App() {
   return (
@@ -17,8 +20,11 @@ function App() {
             <Route path="/register" element={<RegisterPage />} />
 
             <Route element={<ProtectedRoute />}>
+              <Route path="/lots/select/:distrito" element={<LotSelectPage />} />
               <Route path="/lots/:id/edit" element={<LotEditPage />} />
               <Route path="/dashboard" element={<DashboardPage />} />
+              <Route path="/lots/new/:distrito" element={<LotCreatePage />} />
+              <Route path="/lots/select" element={<DistrictSelectPage />} />
             </Route>
 
             <Route path="*" element={<Navigate to="/login" replace />} />

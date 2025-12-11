@@ -7,6 +7,7 @@ export function RegisterPage() {
   const [email, setEmail] = useState("");
   const [fullName, setFullName] = useState("");
   const [password, setPassword] = useState("");
+  const [role, setRole] = useState<"assentamento" | "juridico">("assentamento");
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -24,6 +25,7 @@ export function RegisterPage() {
         email,
         password,
         full_name: fullName,
+        role, // novo campo
       });
 
       setSuccess("Usuário criado com sucesso! Redirecionando para login...");
@@ -80,6 +82,20 @@ export function RegisterPage() {
             onChange={(e) => setPassword(e.target.value)}
             className="border rounded px-3 py-2 text-sm bg-slate-50 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:bg-white"
           />
+        </div>
+
+        <div className="flex flex-col gap-1">
+          <label className="text-xs font-medium text-slate-700">Cargo</label>
+          <select
+            value={role}
+            onChange={(e) =>
+              setRole(e.target.value as "assentamento" | "juridico")
+            }
+            className="border rounded px-3 py-2 text-sm bg-slate-50 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:bg-white"
+          >
+            <option value="assentamento">Assentamento</option>
+            <option value="juridico">Jurídico</option>
+          </select>
         </div>
 
         <button

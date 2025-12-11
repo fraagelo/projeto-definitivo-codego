@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import api from "../api";
 import { useAuth } from "../AuthContext";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 
 export function DashboardPage() {
   const { token, setToken } = useAuth();
@@ -36,42 +36,16 @@ export function DashboardPage() {
         <div>
           <h1 className="text-2xl font-semibold text-slate-900">Dashboard</h1>
           <p className="text-sm text-slate-600">
-            Selecione a empresa para editar os dados.
+            Acesse as empresas para editar os dados.
           </p>
         </div>
-      </div>
 
-      <div className="mt-2 bg-white rounded-lg shadow p-4">
-        <p className="text-sm font-medium text-slate-800 mb-2">
-          Editar dados por empresa
-        </p>
-
-        <div className="flex flex-col gap-2">
-          <Link
-            to="/lots/2/edit"
-            className="px-4 py-2 text-sm bg-sky-600 text-white rounded hover:bg-sky-700"
-          >
-            GRECA DISTRIBUIDORA DE ASFALTOS LTDA.
-          </Link>
-          <Link
-            to="/lots/3/edit"
-            className="px-4 py-2 text-sm bg-sky-600 text-white rounded hover:bg-sky-700"
-          >
-            PLANALTO BLOCOS E ARTEFATOS DE CIMENTO LTDA
-          </Link>
-          <Link
-            to="/lots/4/edit"
-            className="px-4 py-2 text-sm bg-sky-600 text-white rounded hover:bg-sky-700"
-          >
-            JM PALETES EMPREENDIMENTOS DE MADEIRA LTDA
-          </Link>
-          <Link
-            to="/lots/5/edit"
-            className="px-4 py-2 text-sm bg-sky-600 text-white rounded hover:bg-sky-700"
-          >
-            NJF INDÚSTRIA E COMÉRCIO LTDA
-          </Link>
-        </div>
+        <button
+          onClick={() => navigate("/lots/select")}
+          className="px-4 py-2 text-sm bg-sky-600 text-white rounded hover:bg-sky-700"
+        >
+          Editar dados das empresas
+        </button>
       </div>
 
       {loading && (

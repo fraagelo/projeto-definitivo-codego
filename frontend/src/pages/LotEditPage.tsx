@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import api from "../api";
+import { useAuth } from "../AuthContext";
+
 
 type Lot = {
   id: number;
@@ -38,10 +40,15 @@ type Lot = {
 export function LotEditPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const isAssentamento = user?.role === "assentamento";
+  const isJuridico = user?.role === "juridico";
   const [lot, setLot] = useState<Lot | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [step, setStep] = useState<1 | 2 | 3>(1);
+
 
   useEffect(() => {
     const fetchLot = async () => {
@@ -57,6 +64,7 @@ export function LotEditPage() {
     if (id) fetchLot();
   }, [id]);
 
+
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
@@ -67,12 +75,52 @@ export function LotEditPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!lot) return;
+    if (!lot || !user) return;
 
     try {
       setSaving(true);
       setError(null);
-      await api.put(`/lots/${id}`, lot);
+      if (isAssentamento) {
+        const body = {
+          municipio: lot.municipio,
+          distrito: lot.distrito,
+          empresa: lot.empresa,
+          cnpj: lot.cnpj,
+          processo_sei: lot.processo_sei,
+          status_assentamento: lot.status_assentamento,
+          observacoes: lot.observacoes,
+          ramo_atividade: lot.ramo_atividade,
+          empregos_gerados: lot.empregos_gerados,
+          observacoes_1: lot.observacoes_1,
+          quadra: lot.quadra,
+          modulos: lot.modulos,
+          qtd_modulos: lot.qtd_modulos,
+          tamanho_m2: lot.tamanho_m2,
+          matriculas: lot.matriculas,
+          obsevacoes: lot.obsevacoes,
+          data_escrituracao: lot.data_escrituracao,
+          data_contrato_compra_venda: lot.data_contrato_compra_venda,
+        };
+        await api.put(`/lots/${id}/assentamento`, body);
+      } else if (isJuridico) {
+        const body = {
+          acao_judicial: lot.acao_judicial,
+          taxa_ocupacao_imovel: lot.taxa_ocupacao_imovel,
+          imovel_regular_irregular: lot.imovel_regular_irregular,
+          irregularidades: lot.irregularidades,
+          ultima_vistoria: lot.ultima_vistoria,
+          observacoes_2: lot.observacoes_2,
+          atualizado: lot.atualizado,
+          observacoes_3: lot.observacoes_3,
+          processo_judicial: lot.processo_judicial,
+          status: lot.status,
+          assunto_judicial: lot.assunto_judicial,
+        };
+        await api.put(`/lots/${id}/juridico`, body);
+      } else {
+        setError("Seu usuário não tem permissão para editar estes dados.");
+        return;
+      }
       alert("Dados atualizados com sucesso.");
       navigate("/dashboard");
     } catch {
@@ -99,168 +147,269 @@ export function LotEditPage() {
       {error && <p className="mb-3 text-sm text-red-600">{error}</p>}
 
       <form
-        className="grid grid-cols-1 md:grid-cols-2 gap-4"
+        className="space-y-4"
         onSubmit={handleSubmit}
       >
-        <div>
-          <label className="block text-xs font-medium text-slate-700 mb-1">
-            Município
-          </label>
-          <input
-            name="municipio"
-            value={lot.municipio}
-            onChange={handleChange}
-            className="w-full border rounded px-3 py-2 text-sm"
-          />
+        <div className="flex gap-2 text-sm">
+          <button type="button" onClick={() => setStep(1)} className={step === 1 ? "font-semibold" : ""}>
+            1. Dados gerais
+          </button>
+          <button type="button" onClick={() => setStep(2)} className={step === 2 ? "font-semibold" : ""}>
+            2. Empregos e área
+          </button>
+          <button type="button" onClick={() => setStep(3)} className={step === 3 ? "font-semibold" : ""}>
+            3. Dados jurídicos  
+          </button>
         </div>
 
-        <div>
-          <label className="block text-xs font-medium text-slate-700 mb-1">
-            Distrito
-          </label>
-          <input
-            name="distrito"
-            value={lot.distrito ?? ""}
-            onChange={handleChange}
-            className="w-full border rounded px-3 py-2 text-sm"
-          />
-        </div>
-
-        <div>
-          <label className="block text-xs font-medium text-slate-700 mb-1">
-            Empresa
-          </label>
-          <input
-            name="empresa"
-            value={lot.empresa ?? ""}
-            readOnly
-            className="w-full border rounded px-3 py-2 text-sm bg-slate-100 cursor-not-allowed"
-          />
-        </div>
-
-        <div>
-          <label className="block text-xs font-medium text-slate-700 mb-1">
-            CNPJ
-          </label>
-          <input
-            name="cnpj"
-            value={lot.cnpj ?? ""}
-            onChange={handleChange}
-            className="w-full border rounded px-3 py-2 text-sm"
-          />
-        </div>
-        <div>
-            <label className="block text-xs font-medium text-slate-700 mb-1">
-                Processo SEI
-            </label>
-            <input
-                name="processo_sei"
-                value={lot.processo_sei ?? ""}
-                onChange={handleChange}
-                className="w-full border rounded px-3 py-2 text-sm"
-            />
-            </div>
-
+        {step === 1 && (
+          <div>
             <div>
             <label className="block text-xs font-medium text-slate-700 mb-1">
-                Status de assentamento
+              Município
             </label>
             <input
-                name="status_assentamento"
-                value={lot.status_assentamento ?? ""}
-                onChange={handleChange}
-                className="w-full border rounded px-3 py-2 text-sm"
+              name="municipio"
+              value={lot.municipio}
+              onChange={handleChange}
+              disabled={!isAssentamento}
+              className="w-full border rounded px-3 py-2 text-sm disabled:bg-slate-100 disabled:cursor-not-allowed"
             />
             </div>
 
-            <div>
+          <div>
             <label className="block text-xs font-medium text-slate-700 mb-1">
-                Ramo de atividade
+              Distrito
             </label>
             <input
-                name="ramo_atividade"
-                value={lot.ramo_atividade ?? ""}
-                onChange={handleChange}
-                className="w-full border rounded px-3 py-2 text-sm"
+              name="distrito"
+              value={lot.distrito ?? ""}
+              onChange={handleChange}
+              disabled={!isAssentamento}
+              className="w-full border rounded px-3 py-2 text-sm disabled:bg-slate-100 disabled:cursor-not-allowed"
             />
-            </div>
+          </div>
 
-            <div>
+          <div>
             <label className="block text-xs font-medium text-slate-700 mb-1">
-                Empregos gerados
+              Empresa
             </label>
             <input
-                type="number"
-                name="empregos_gerados"
-                value={lot.empregos_gerados ?? ""}
-                onChange={handleChange}
-                className="w-full border rounded px-3 py-2 text-sm"
+              name="empresa"
+              value={lot.empresa ?? ""}
+              readOnly
+              className="w-full border rounded px-3 py-2 text-sm bg-slate-100 cursor-not-allowed"
             />
-            </div>
+          </div>
 
-            <div>
+          <div>
             <label className="block text-xs font-medium text-slate-700 mb-1">
-                Quadra
+              CNPJ
             </label>
             <input
-                name="quadra"
-                value={lot.quadra ?? ""}
-                onChange={handleChange}
-                className="w-full border rounded px-3 py-2 text-sm"
+              name="cnpj"
+              value={lot.cnpj ?? ""}
+              onChange={handleChange}
+              disabled={!isAssentamento}
+              className="w-full border rounded px-3 py-2 text-sm disabled:bg-slate-100 disabled:cursor-not-allowed"
             />
-            </div>
+          </div>
+          <div>
+              <label className="block text-xs font-medium text-slate-700 mb-1">
+                  Processo SEI
+              </label>
+              <input
+                  name="processo_sei"
+                  value={lot.processo_sei ?? ""}
+                  onChange={handleChange}
+                  disabled={!isAssentamento}
+                  className="w-full border rounded px-3 py-2 text-sm disabled:bg-slate-100 disabled:cursor-not-allowed"
+              />
+              </div>
 
+              <div>
+              <label className="block text-xs font-medium text-slate-700 mb-1">
+                  Status de assentamento
+              </label>
+              <input
+                  name="status_assentamento"
+                  value={lot.status_assentamento ?? ""}
+                  onChange={handleChange}
+                  disabled={!isAssentamento}
+                  className="w-full border rounded px-3 py-2 text-sm disabled:bg-slate-100 disabled:cursor-not-allowed"
+              />
+              </div>
+
+              <div>
+                <label className="block text-xs font-medium text-slate-700 mb-1">
+                  Observações (Status assentamento)
+                </label>
+                <input
+                  name="observacoes"
+                  value={lot.observacoes ?? ""}
+                  onChange={handleChange}
+                  disabled={!isAssentamento}
+                  className="w-full border rounded px-3 py-2 text-sm disabled:bg-slate-100 disabled:cursor-not-allowed"
+                />
+              </div>
+          </div>
+        )}
+
+        {step === 2 && (
+          <div>
             <div>
-            <label className="block text-xs font-medium text-slate-700 mb-1">
-                Módulo(s)
-            </label>
-            <input
-                name="modulos"
-                value={lot.modulos ?? ""}
-                onChange={handleChange}
-                className="w-full border rounded px-3 py-2 text-sm"
-            />
-            </div>
+              <label className="block text-xs font-medium text-slate-700 mb-1">
+                  Ramo de atividade
+              </label>
+              <input
+                  name="ramo_atividade"
+                  value={lot.ramo_atividade ?? ""}
+                  onChange={handleChange}
+                  disabled={!isAssentamento}
+                  className="w-full border rounded px-3 py-2 text-sm disabled:bg-slate-100 disabled:cursor-not-allowed"
+              />
+              </div>
 
-            <div>
-            <label className="block text-xs font-medium text-slate-700 mb-1">
-                Qtd. módulos
-            </label>
-            <input
-                type="number"
-                name="qtd_modulos"
-                value={lot.qtd_modulos ?? ""}
-                onChange={handleChange}
-                className="w-full border rounded px-3 py-2 text-sm"
-            />
-            </div>
+              <div>
+              <label className="block text-xs font-medium text-slate-700 mb-1">
+                  Empregos gerados
+              </label>
+              <input
+                  type="number"
+                  name="empregos_gerados"
+                  value={lot.empregos_gerados ?? ""}
+                  onChange={handleChange}
+                  disabled={!isAssentamento}
+                  className="w-full border rounded px-3 py-2 text-sm disabled:bg-slate-100 disabled:cursor-not-allowed"
+              />
+              </div>
 
-            <div>
-            <label className="block text-xs font-medium text-slate-700 mb-1">
-                Tamanho (m²)
-            </label>
-            <input
-                type="number"
-                step="0.01"
-                name="tamanho_m2"
-                value={lot.tamanho_m2 ?? ""}
-                onChange={handleChange}
-                className="w-full border rounded px-3 py-2 text-sm"
-            />
-            </div>
+              <div>
+                <label className="block text-xs font-medium text-slate-700 mb-1">
+                  Observações (Empregos / atividade)
+                </label>
+                <input
+                  name="observacoes_1"
+                  value={lot.observacoes_1 ?? ""}
+                  onChange={handleChange}
+                  disabled={!isAssentamento}
+                  className="w-full border rounded px-3 py-2 text-sm disabled:bg-slate-100 disabled:cursor-not-allowed"
+                />
+              </div>
 
-            <div>
-            <label className="block text-xs font-medium text-slate-700 mb-1">
-                Matrícula(s)
-            </label>
-            <input
-                name="matriculas"
-                value={lot.matriculas ?? ""}
-                onChange={handleChange}
-                className="w-full border rounded px-3 py-2 text-sm"
-            />
-            </div>
+              <div>
+              <label className="block text-xs font-medium text-slate-700 mb-1">
+                  Quadra
+              </label>
+              <input
+                  name="quadra"
+                  value={lot.quadra ?? ""}
+                  onChange={handleChange}
+                  disabled={!isAssentamento}
+                  className="w-full border rounded px-3 py-2 text-sm disabled:bg-slate-100 disabled:cursor-not-allowed"
+              />
+              </div>
 
+              <div>
+              <label className="block text-xs font-medium text-slate-700 mb-1">
+                  Módulo(s)
+              </label>
+              <input
+                  name="modulos"
+                  value={lot.modulos ?? ""}
+                  onChange={handleChange}
+                  disabled={!isAssentamento}
+                  className="w-full border rounded px-3 py-2 text-sm disabled:bg-slate-100 disabled:cursor-not-allowed"
+              />
+              </div>
+
+              <div>
+              <label className="block text-xs font-medium text-slate-700 mb-1">
+                  Qtd. módulos
+              </label>
+              <input
+                  type="number"
+                  name="qtd_modulos"
+                  value={lot.qtd_modulos ?? ""}
+                  onChange={handleChange}
+                  disabled={!isAssentamento}
+                  className="w-full border rounded px-3 py-2 text-sm disabled:bg-slate-100 disabled:cursor-not-allowed"
+              />
+              </div>
+
+              <div>
+              <label className="block text-xs font-medium text-slate-700 mb-1">
+                  Tamanho (m²)
+              </label>
+              <input
+                  type="number"
+                  step="0.01"
+                  name="tamanho_m2"
+                  value={lot.tamanho_m2 ?? ""}
+                  onChange={handleChange}
+                  disabled={!isAssentamento}
+                  className="w-full border rounded px-3 py-2 text-sm disabled:bg-slate-100 disabled:cursor-not-allowed"
+              />
+              </div>
+
+              <div>
+              <label className="block text-xs font-medium text-slate-700 mb-1">
+                  Matrícula(s)
+              </label>
+              <input
+                  name="matriculas"
+                  value={lot.matriculas ?? ""}
+                  onChange={handleChange}
+                  disabled={!isAssentamento}
+                  className="w-full border rounded px-3 py-2 text-sm disabled:bg-slate-100 disabled:cursor-not-allowed"
+              />
+              </div>
+
+              <div>
+                <label className="block text-xs font-medium text-slate-700 mb-1">
+                  Observações (matrícula / área)
+                </label>
+                <input
+                  name="obsevacoes"
+                  value={lot.obsevacoes ?? ""}
+                  onChange={handleChange}
+                  disabled={!isAssentamento}
+                  className="w-full border rounded px-3 py-2 text-sm disabled:bg-slate-100 disabled:cursor-not-allowed"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-medium text-slate-700 mb-1">
+                  Data da escrituração
+                </label>
+                <input
+                  type="date"
+                  name="data_escrituracao"
+                  value={lot.data_escrituracao ?? ""}
+                  onChange={handleChange}
+                  disabled={!isAssentamento}
+                  className="w-full border rounded px-3 py-2 text-sm disabled:bg-slate-100 disabled:cursor-not-allowed"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-medium text-slate-700 mb-1">
+                  Data contrato de compra e venda
+                </label>
+                <input
+                  type="date"
+                  name="data_contrato_compra_venda"
+                  value={lot.data_contrato_compra_venda ?? ""}
+                  onChange={handleChange}
+                  disabled={!isAssentamento}
+                  className="w-full border rounded px-3 py-2 text-sm disabled:bg-slate-100 disabled:cursor-not-allowed"
+                />
+              </div>
+          </div>
+        )}
+
+        {step === 3 && (
+          <div className="p-4 md:p-6 grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
             <label className="block text-xs font-medium text-slate-700 mb-1">
                 Ação judicial
@@ -269,7 +418,8 @@ export function LotEditPage() {
                 name="acao_judicial"
                 value={lot.acao_judicial ?? ""}
                 onChange={handleChange}
-                className="w-full border rounded px-3 py-2 text-sm"
+                disabled={!isJuridico}
+                className="w-full border rounded px-3 py-2 text-sm disabled:bg-slate-100 disabled:cursor-not-allowed"
             />
             </div>
 
@@ -283,7 +433,8 @@ export function LotEditPage() {
                 name="taxa_ocupacao_imovel"
                 value={lot.taxa_ocupacao_imovel ?? ""}
                 onChange={handleChange}
-                className="w-full border rounded px-3 py-2 text-sm"
+                disabled={!isJuridico}
+                className="w-full border rounded px-3 py-2 text-sm disabled:bg-slate-100 disabled:cursor-not-allowed"
             />
             </div>
 
@@ -295,20 +446,89 @@ export function LotEditPage() {
                 name="imovel_regular_irregular"
                 value={lot.imovel_regular_irregular ?? ""}
                 onChange={handleChange}
-                className="w-full border rounded px-3 py-2 text-sm"
+                disabled={!isJuridico}
+                className="w-full border rounded px-3 py-2 text-sm disabled:bg-slate-100 disabled:cursor-not-allowed"
             />
             </div>
 
-            <div className="md:col-span-2">
+            <div>
             <label className="block text-xs font-medium text-slate-700 mb-1">
                 Irregularidades
             </label>
-            <textarea
+            <input
                 name="irregularidades"
                 value={lot.irregularidades ?? ""}
                 onChange={handleChange}
-                className="w-full border rounded px-3 py-2 text-sm min-h-[80px]"
+                disabled={!isJuridico}
+                className="w-full border rounded px-3 py-2 text-sm disabled:bg-slate-100 disabled:cursor-not-allowed"
             />
+            </div>
+
+            <div>
+              <label className="block text-xs font-medium text-slate-700 mb-1">
+                Última vistoria
+              </label>
+              <input
+                type="date"
+                name="ultima_vistoria"
+                value={lot.ultima_vistoria ?? ""}
+                onChange={handleChange}
+                disabled={!isJuridico}
+                className="w-full border rounded px-3 py-2 text-sm disabled:bg-slate-100 disabled:cursor-not-allowed"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-medium text-slate-700 mb-1">
+                Observações (vistoria / irregularidades)
+              </label>
+              <input
+                name="observacoes_2"
+                value={lot.observacoes_2 ?? ""}
+                onChange={handleChange}
+                disabled={!isJuridico}
+                className="w-full border rounded px-3 py-2 text-sm disabled:bg-slate-100 disabled:cursor-not-allowed"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-medium text-slate-700 mb-1">
+                Data de atualização
+              </label>
+              <input
+                type="date"
+                name="atualizado"
+                value={lot.atualizado ?? ""}
+                onChange={handleChange}
+                disabled={!isJuridico}
+                className="w-full border rounded px-3 py-2 text-sm disabled:bg-slate-100 disabled:cursor-not-allowed"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-medium text-slate-700 mb-1">
+                Observações gerais (jurídico)
+              </label>
+              <input
+                name="observacoes_3"
+                value={lot.observacoes_3 ?? ""}
+                onChange={handleChange}
+                disabled={!isJuridico}
+                className="w-full border rounded px-3 py-2 text-sm disabled:bg-slate-100 disabled:cursor-not-allowed"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-medium text-slate-700 mb-1">
+                Processo judicial
+              </label>
+              <input
+                name="processo_judicial"
+                value={lot.processo_judicial ?? ""}
+                onChange={handleChange}
+                disabled={!isJuridico}
+                className="w-full border rounded px-3 py-2 text-sm disabled:bg-slate-100 disabled:cursor-not-allowed"
+              />
             </div>
 
             <div>
@@ -319,7 +539,8 @@ export function LotEditPage() {
                 name="status"
                 value={lot.status ?? ""}
                 onChange={handleChange}
-                className="w-full border rounded px-3 py-2 text-sm"
+                disabled={!isJuridico}
+                className="w-full border rounded px-3 py-2 text-sm disabled:bg-slate-100 disabled:cursor-not-allowed"
             />
             </div>
 
@@ -331,25 +552,14 @@ export function LotEditPage() {
                 name="assunto_judicial"
                 value={lot.assunto_judicial ?? ""}
                 onChange={handleChange}
-                className="w-full border rounded px-3 py-2 text-sm"
+                disabled={!isJuridico}
+                className="w-full border rounded px-3 py-2 text-sm disabled:bg-slate-100 disabled:cursor-not-allowed"
             />
             </div>
-        {/* Repita esse padrão para os campos que mais interessam agora.
-           Você não é obrigado a expor todos de uma vez. */}
+          </div>
+        )}
 
-        <div className="md:col-span-2">
-          <label className="block text-xs font-medium text-slate-700 mb-1">
-            Observações
-          </label>
-          <textarea
-            name="observacoes"
-            value={lot.observacoes ?? ""}
-            onChange={handleChange}
-            className="w-full border rounded px-3 py-2 text-sm min-h-[80px]"
-          />
-        </div>
-
-        <div className="md:col-span-2 flex justify-end gap-2 mt-4">
+        <div className="flex justify-between mt-4">
           <button
             type="button"
             onClick={() => navigate("/dashboard")}
@@ -357,14 +567,39 @@ export function LotEditPage() {
           >
             Cancelar
           </button>
+        </div>
 
-          <button
-            type="submit"
-            disabled={saving}
-            className="px-4 py-2 text-sm bg-sky-600 text-white rounded hover:bg-sky-700 disabled:opacity-60"
-          >
-            {saving ? "Salvando..." : "Salvar alterações"}
-          </button>
+          <div className="flex gap-2">
+            {step > 1 && (
+              <button
+                type="button"
+                onClick={() => setStep((s) => (s - 1) as 1 | 2 | 3)}
+                className="px-3 py-2 text-sm border rounded"
+              >
+                Voltar
+              </button>
+
+            )}
+
+            {step < 3 && (
+              <button
+                type="button"
+                onClick={() => setStep((s) => (s + 1) as 1 | 2 | 3)}
+                className="px-3 py-2 text-sm bg-slate-200 rounded"
+              >
+                Próximo
+              </button>
+            )}
+
+            {step === 3 && (
+              <button
+                type="submit"
+                disabled={saving}
+                className="px-4 py-2 text-sm bg-sky-600 text-white rounded hover:bg-sky-700 disabled:opacity-60"
+              >
+                {saving ? "Salvando..." : "Salvar alterações"}
+              </button>
+            )}
         </div>
       </form>
     </div>

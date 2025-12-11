@@ -75,3 +75,24 @@ def get_current_user(
         raise credentials_exception
 
     return user
+
+
+def assentamento_required(
+    current_user: UserModel = Depends(get_current_user),
+) -> UserModel:
+    if current_user.role != "assentamento":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Acesso permitido apenas para usuários de Assentamento.",
+        )
+    return current_user
+
+def juridico_required(
+    current_user: UserModel = Depends(get_current_user),
+) -> UserModel:
+    if current_user.role != "juridico":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Acesso permitido apenas para usuários do Jurídico.",
+        )
+    return current_user

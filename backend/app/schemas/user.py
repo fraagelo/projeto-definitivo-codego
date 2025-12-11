@@ -1,6 +1,7 @@
 from pydantic import BaseModel, EmailStr, field_validator
 from typing import Optional
 from datetime import datetime
+from typing import Literal
 
 class UserBase(BaseModel):
     email: EmailStr
@@ -8,7 +9,7 @@ class UserBase(BaseModel):
 
 class UserCreate(UserBase):
     password: str
-
+    role: Literal["assentamento", "juridico"]
     @field_validator("password")
     @classmethod
     def validate_password(cls, v: str) -> str:
@@ -20,12 +21,14 @@ class User(UserBase):
     id: int
     is_active: bool
     created_at: datetime
+    role: str
 
     class Config:
         from_attributes = True
 
 class UserResponse(UserBase):
     id: int
+    role: str
 
     class Config:
         from_attributes = True

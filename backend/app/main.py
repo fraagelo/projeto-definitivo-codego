@@ -3,7 +3,7 @@ from app.core.config import settings
 from fastapi import Depends
 from app.db.auth_db import get_auth_db
 from sqlalchemy.orm import Session
-from sqlalchemy import text
+from sqlalchemy import text, select
 from app.models.user import User as UserModel
 from app.schemas.user import UserCreate, LoginRequest, Token, UserResponse
 from app.core.security import get_password_hash, verify_password, create_access_token
@@ -11,17 +11,21 @@ from jose import JWTError, jwt
 from fastapi import HTTPException, status
 from datetime import timedelta
 from app.core.security import ACCESS_TOKEN_EXPIRE_MINUTES
-from app.core.security import get_current_user
+from app.core.security import get_current_user, assentamento_required, juridico_required
 from fastapi.middleware.cors import CORSMiddleware
 from app.models.municipal_lot import MunicipalLot
 from app.schemas.municipal_lot import (
     MunicipalLotResponse,
     MunicipalLotUpdate,
+    MunicipalLotAssentamentoUpdate,
+    MunicipalLotJuridicoUpdate,
+    MunicipalLotCreate,
 )
-from app.core.security import get_current_user
 from app.db.auth_db import get_auth_db
 from sqlalchemy.orm import Session
 from fastapi import Depends, HTTPException
+from typing import List
+from fastapi import Query
 
 
 app = FastAPI(title=settings.app_name)
@@ -64,7 +68,8 @@ def register_user(user_in: UserCreate, db: Session = Depends(get_auth_db)):
     db_user = UserModel(
         email=user_in.email,
         full_name=user_in.full_name,
-        hashed_password=hashed_password
+        hashed_password=hashed_password,
+        role=user_in.role,
     )
     db.add(db_user)
     db.commit()
@@ -147,12 +152,13 @@ def get_lot(
         raise HTTPException(status_code=404, detail="Registro não encontrado")
     return lot
 
-@app.put("/lots/{lot_id}", response_model=MunicipalLotResponse)
-def update_lot(
+
+@app.put("/lots/{lot_id}/assentamento", response_model=MunicipalLotResponse)
+def update_lot_assentamento(
     lot_id: int,
-    lot_in: MunicipalLotUpdate,
+    lot_in: MunicipalLotAssentamentoUpdate,
     db: Session = Depends(get_auth_db),
-    current_user=Depends(get_current_user),
+    current_user: UserModel = Depends(assentamento_required),
 ):
     lot = db.query(MunicipalLot).filter(MunicipalLot.id == lot_id).first()
     if not lot:
@@ -165,3 +171,72 @@ def update_lot(
     db.commit()
     db.refresh(lot)
     return lot
+
+@app.put("/lots/{lot_id}/juridico", response_model=MunicipalLotResponse)
+def update_lot_juridico(
+    lot_id: int,
+    lot_in: MunicipalLotJuridicoUpdate,
+    db: Session = Depends(get_auth_db),
+    current_user: UserModel = Depends(juridico_required),
+):
+    lot = db.query(MunicipalLot).filter(MunicipalLot.id == lot_id).first()
+    if not lot:
+        raise HTTPException(status_code=404, detail="Registro não encontrado")
+
+    for field, value in lot_in.model_dump(exclude_unset=True).items():
+        setattr(lot, field, value)
+
+    db.add(lot)
+    db.commit()
+    db.refresh(lot)
+    return lot
+
+@app.post("/lots", response_model=MunicipalLotResponse)
+def create_lot(
+    lot_in: MunicipalLotCreate,
+    db: Session = Depends(get_auth_db),
+    current_user: UserModel = Depends(assentamento_required),
+):
+    lot = MunicipalLot(**lot_in.model_dump())
+    db.add(lot)
+    db.commit()
+    db.refresh(lot)
+    return lot
+
+@app.get("/lots", response_model=List[MunicipalLotResponse])
+def list_lots(
+    db: Session = Depends(get_auth_db),
+    current_user=Depends(get_current_user),
+):
+    return db.query(MunicipalLot).order_by(MunicipalLot.empresa).all()
+
+@app.get("/districts", response_model=List[str])
+def list_districts(
+    db: Session = Depends(get_auth_db),
+    current_user=Depends(get_current_user),
+):
+    rows = (
+        db.query(MunicipalLot.distrito)
+        .filter(MunicipalLot.distrito.isnot(None))
+        .distinct()
+        .order_by(MunicipalLot.distrito)
+        .all()
+    )
+    return [row[0] for row in rows]
+
+@app.get("/lots/by-district/{distrito}", response_model=List[MunicipalLotResponse])
+def list_lots_by_district(
+    distrito: str,
+    q: str | None = Query(default=None, description="Filtro por nome de empresa"),
+    db: Session = Depends(get_auth_db),
+    current_user=Depends(get_current_user),
+):
+    query = (
+        db.query(MunicipalLot)
+        .filter(MunicipalLot.distrito == distrito)
+    )
+    if q:
+        like = f"%{q}%"
+        query = query.filter(MunicipalLot.empresa.ilike(like))
+
+    return query.order_by(MunicipalLot.empresa).all()

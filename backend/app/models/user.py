@@ -14,3 +14,4 @@ class User(Base):
     full_name = Column(String(255), nullable=True)
     is_active = Column(Integer, default=1)
     created_at = Column(DateTime, default=datetime.utcnow)
+    role = Column(String(20), default="assentamento")
