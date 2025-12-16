@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 import api from "../api";
 import { useAuth } from "../AuthContext";
 
@@ -11,21 +11,21 @@ type Lot = {
   empresa?: string | null;
   cnpj?: string | null;
   processo_sei?: string | null;
-  status_assentamento?: string | null;
+  status_de_assentamento?: string | null;
   observacoes?: string | null;
-  ramo_atividade?: string | null;
+  ramo_de_atividade?: string | null;
   empregos_gerados?: number | null;
   observacoes_1?: string | null;
   quadra?: string | null;
-  modulos?: string | null;
+  modulo_s?: string | null;
   qtd_modulos?: number | null;
   tamanho_m2?: number | null;
-  matriculas?: string | null;
+  matricula_s?: string | null;
   obsevacoes?: string | null;
   data_escrituracao?: string | null;
-  data_contrato_compra_venda?: string | null;
+  data_contrato_de_compra_e_venda?: string | null;
   acao_judicial?: string | null;
-  taxa_ocupacao_imovel?: number | null;
+  taxa_e_ocupacao_do_imovel?: number | null;
   imovel_regular_irregular?: string | null;
   irregularidades?: string | null;
   ultima_vistoria?: string | null;
@@ -44,10 +44,15 @@ export function LotEditPage() {
   const isAssentamento = user?.role === "assentamento";
   const isJuridico = user?.role === "juridico";
   const [lot, setLot] = useState<Lot | null>(null);
+  const [initialLot, setInitialLot] = useState<Lot | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [step, setStep] = useState<1 | 2 | 3>(1);
+  const location = useLocation();
+  const created = location.state?.created;
+  const createdEmpresa = location.state?.empresa;
+  const [showCreatedNotice, setShowCreatedNotice] = useState(!!created);
 
 
   useEffect(() => {
@@ -55,6 +60,7 @@ export function LotEditPage() {
       try {
         const response = await api.get(`/lots/${id}`);
         setLot(response.data);
+        setInitialLot(response.data);
       } catch {
         setError("Erro ao carregar dados do registro.");
       } finally {
@@ -63,6 +69,11 @@ export function LotEditPage() {
     };
     if (id) fetchLot();
   }, [id]);
+
+  const isDirty = () => {
+    if (!lot || !initialLot) return false;
+    return JSON.stringify(lot) !== JSON.stringify(initialLot);
+  };
 
 
   const handleChange = (
@@ -87,25 +98,25 @@ export function LotEditPage() {
           empresa: lot.empresa,
           cnpj: lot.cnpj,
           processo_sei: lot.processo_sei,
-          status_assentamento: lot.status_assentamento,
+          status_de_assentamento: lot.status_de_assentamento,
           observacoes: lot.observacoes,
-          ramo_atividade: lot.ramo_atividade,
+          ramo_de_atividade: lot.ramo_de_atividade,
           empregos_gerados: lot.empregos_gerados,
           observacoes_1: lot.observacoes_1,
           quadra: lot.quadra,
-          modulos: lot.modulos,
+          modulo_s: lot.modulo_s,
           qtd_modulos: lot.qtd_modulos,
           tamanho_m2: lot.tamanho_m2,
-          matriculas: lot.matriculas,
+          matricula_s: lot.matricula_s,
           obsevacoes: lot.obsevacoes,
           data_escrituracao: lot.data_escrituracao,
-          data_contrato_compra_venda: lot.data_contrato_compra_venda,
+          data_contrato_de_compra_e_venda: lot.data_contrato_de_compra_e_venda,
         };
         await api.put(`/lots/${id}/assentamento`, body);
       } else if (isJuridico) {
         const body = {
           acao_judicial: lot.acao_judicial,
-          taxa_ocupacao_imovel: lot.taxa_ocupacao_imovel,
+          taxa_e_ocupacao_do_imovel: lot.taxa_e_ocupacao_do_imovel,
           imovel_regular_irregular: lot.imovel_regular_irregular,
           irregularidades: lot.irregularidades,
           ultima_vistoria: lot.ultima_vistoria,
@@ -144,6 +155,20 @@ export function LotEditPage() {
         Editar registro #{lot.id}
       </h1>
 
+      {showCreatedNotice && (
+        <div className="mb-3 rounded border border-emerald-500 bg-emerald-50 px-3 py-2 text-xs text-emerald-800 flex justify-between items-center">
+          <span>
+            Empresa {createdEmpresa && <strong>{createdEmpresa}</strong>} criada com
+            sucesso. Complete os dados abaixo e clique em "Salvar alterações".
+          </span>
+          <button
+            onClick={() => setShowCreatedNotice(false)}
+            className="text-emerald-700 hover:text-emerald-900 text-xs"
+          >
+            Fechar
+          </button>
+        </div>
+      )}
       {error && <p className="mb-3 text-sm text-red-600">{error}</p>}
 
       <form
@@ -233,7 +258,7 @@ export function LotEditPage() {
               </label>
               <input
                   name="status_assentamento"
-                  value={lot.status_assentamento ?? ""}
+                  value={lot.status_de_assentamento ?? ""}
                   onChange={handleChange}
                   disabled={!isAssentamento}
                   className="w-full border rounded px-3 py-2 text-sm disabled:bg-slate-100 disabled:cursor-not-allowed"
@@ -263,7 +288,7 @@ export function LotEditPage() {
               </label>
               <input
                   name="ramo_atividade"
-                  value={lot.ramo_atividade ?? ""}
+                  value={lot.ramo_de_atividade ?? ""}
                   onChange={handleChange}
                   disabled={!isAssentamento}
                   className="w-full border rounded px-3 py-2 text-sm disabled:bg-slate-100 disabled:cursor-not-allowed"
@@ -316,7 +341,7 @@ export function LotEditPage() {
               </label>
               <input
                   name="modulos"
-                  value={lot.modulos ?? ""}
+                  value={lot.modulo_s ?? ""}
                   onChange={handleChange}
                   disabled={!isAssentamento}
                   className="w-full border rounded px-3 py-2 text-sm disabled:bg-slate-100 disabled:cursor-not-allowed"
@@ -358,7 +383,7 @@ export function LotEditPage() {
               </label>
               <input
                   name="matriculas"
-                  value={lot.matriculas ?? ""}
+                  value={lot.matricula_s ?? ""}
                   onChange={handleChange}
                   disabled={!isAssentamento}
                   className="w-full border rounded px-3 py-2 text-sm disabled:bg-slate-100 disabled:cursor-not-allowed"
@@ -399,7 +424,7 @@ export function LotEditPage() {
                 <input
                   type="date"
                   name="data_contrato_compra_venda"
-                  value={lot.data_contrato_compra_venda ?? ""}
+                  value={lot.data_contrato_de_compra_e_venda ?? ""}
                   onChange={handleChange}
                   disabled={!isAssentamento}
                   className="w-full border rounded px-3 py-2 text-sm disabled:bg-slate-100 disabled:cursor-not-allowed"
@@ -431,7 +456,7 @@ export function LotEditPage() {
                 type="number"
                 step="0.01"
                 name="taxa_ocupacao_imovel"
-                value={lot.taxa_ocupacao_imovel ?? ""}
+                value={lot.taxa_e_ocupacao_do_imovel ?? ""}
                 onChange={handleChange}
                 disabled={!isJuridico}
                 className="w-full border rounded px-3 py-2 text-sm disabled:bg-slate-100 disabled:cursor-not-allowed"
@@ -594,7 +619,7 @@ export function LotEditPage() {
             {step === 3 && (
               <button
                 type="submit"
-                disabled={saving}
+                disabled={saving || !isDirty()}
                 className="px-4 py-2 text-sm bg-sky-600 text-white rounded hover:bg-sky-700 disabled:opacity-60"
               >
                 {saving ? "Salvando..." : "Salvar alterações"}

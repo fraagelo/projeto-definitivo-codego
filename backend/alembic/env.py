@@ -5,6 +5,8 @@ from sqlalchemy import pool
 
 from alembic import context
 from app.models.user import Base
+from app.core.config import settings
+
 import sys
 import os
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -18,6 +20,8 @@ config = context.config
 # This line sets up loggers basically.
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
+
+config.set_main_option("sqlalchemy.url", settings.auth_db_url)
 
 # add your model's MetaData object here
 # for 'autogenerate' support

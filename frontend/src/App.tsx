@@ -9,6 +9,7 @@ import { LotEditPage } from "./pages/LotEditPage";
 import { LotCreatePage } from "./pages/LotCreatePage";
 import { LotSelectPage } from "./pages/LotSelectPage";
 import { DistrictSelectPage } from "./pages/DistrictSelectPage";
+import { ReportPage } from "./pages/ReportPage";
 
 function App() {
   return (
@@ -23,8 +24,9 @@ function App() {
               <Route path="/lots/select/:distrito" element={<LotSelectPage />} />
               <Route path="/lots/:id/edit" element={<LotEditPage />} />
               <Route path="/dashboard" element={<DashboardPage />} />
-              <Route path="/lots/new/:distrito" element={<LotCreatePage />} />
+              <Route path="/lots/new" element={<LotCreatePage />} />
               <Route path="/lots/select" element={<DistrictSelectPage />} />
+              <Route path="/reports" element={<ReportPage />} />
             </Route>
 
             <Route path="*" element={<Navigate to="/login" replace />} />

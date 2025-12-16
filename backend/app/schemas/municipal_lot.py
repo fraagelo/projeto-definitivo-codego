@@ -7,27 +7,27 @@ class MunicipalLotBase(BaseModel):
     distrito: Optional[str] = None
     empresa: Optional[str] = None
     cnpj: Optional[str] = None
-    processo_sei: Optional[str] = None
-    status_assentamento: Optional[str] = None
+    processo_sei: Optional[int] = None
+    status_de_assentamento: Optional[str] = None
     observacoes: Optional[str] = None
-    ramo_atividade: Optional[str] = None
+    ramo_de_atividade: Optional[str] = None
     empregos_gerados: Optional[int] = None
     observacoes_1: Optional[str] = None
-    quadra: Optional[str] = None
-    modulos: Optional[str] = None
+    quadra: Optional[int] = None
+    modulo_s: Optional[str] = None
     qtd_modulos: Optional[int] = None
     tamanho_m2: Optional[float] = None
-    matriculas: Optional[str] = None
+    matricula_s: Optional[int] = None
     obsevacoes: Optional[str] = None
-    data_escrituracao: Optional[date] = None
-    data_contrato_compra_venda: Optional[date] = None
+    data_escrituracao: Optional[str] = None
+    data_contrato_de_compra_e_venda: Optional[str] = None
     acao_judicial: Optional[str] = None
-    taxa_ocupacao_imovel: Optional[float] = None
+    taxa_e_ocupacao_do_imovel: Optional[float] = None
     imovel_regular_irregular: Optional[str] = None
     irregularidades: Optional[str] = None
-    ultima_vistoria: Optional[date] = None
+    ultima_vistoria: Optional[str] = None
     observacoes_2: Optional[str] = None
-    atualizado: Optional[date] = None
+    atualizado: Optional[str] = None
     observacoes_3: Optional[str] = None
     processo_judicial: Optional[str] = None
     status: Optional[str] = None
@@ -38,20 +38,20 @@ class MunicipalLotAssentamentoUpdate(BaseModel):
     distrito: Optional[str] = None
     empresa: Optional[str] = None
     cnpj: Optional[str] = None
-    processo_sei: Optional[str] = None
-    status_assentamento: Optional[str] = None
+    processo_sei: Optional[int] = None
+    status_de_assentamento: Optional[str] = None
     observacoes: Optional[str] = None
-    ramo_atividade: Optional[str] = None
+    ramo_de_atividade: Optional[str] = None
     empregos_gerados: Optional[int] = None
     observacoes_1: Optional[str] = None
-    quadra: Optional[str] = None
-    modulos: Optional[str] = None
+    quadra: Optional[int] = None
+    modulo_s: Optional[str] = None
     qtd_modulos: Optional[int] = None
     tamanho_m2: Optional[float] = None
-    matriculas: Optional[str] = None
+    matricula_s: Optional[int] = None
     obsevacoes: Optional[str] = None
-    data_escrituracao: Optional[date] = None
-    data_contrato_compra_venda: Optional[date] = None
+    data_escrituracao: Optional[str] = None
+    data_contrato_de_compra_e_venda: Optional[str] = None
 
     @field_validator("empregos_gerados")
     @classmethod
@@ -76,18 +76,18 @@ class MunicipalLotAssentamentoUpdate(BaseModel):
 
 class MunicipalLotJuridicoUpdate(BaseModel):
     acao_judicial: Optional[str] = None
-    taxa_ocupacao_imovel: Optional[float] = None
+    taxa_e_ocupacao_do_imovel: Optional[float] = None
     imovel_regular_irregular: Optional[str] = None
     irregularidades: Optional[str] = None
-    ultima_vistoria: Optional[date] = None
+    ultima_vistoria: Optional[str] = None
     observacoes_2: Optional[str] = None
-    atualizado: Optional[date] = None
+    atualizado: Optional[str] = None
     observacoes_3: Optional[str] = None
     processo_judicial: Optional[str] = None
     status: Optional[str] = None
     assunto_judicial: Optional[str] = None
 
-    @field_validator("taxa_ocupacao_imovel")
+    @field_validator("taxa_e_ocupacao_do_imovel")
     @classmethod
     def validate_taxa(cls, v: Optional[float]) -> Optional[float]:
         if v is None:
