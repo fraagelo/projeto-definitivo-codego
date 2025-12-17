@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import { useAuth } from "../context/AuthContext";
 import api from "../api";
 
 type Lot = {
@@ -12,7 +11,6 @@ type Lot = {
 };
 
 export function ReportPage() {
-  const { user } = useAuth();
   const [lots, setLots] = useState<Lot[]>([]);
   const [selectedLotId, setSelectedLotId] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);

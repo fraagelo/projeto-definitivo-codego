@@ -9,7 +9,7 @@ from app.schemas.user import UserCreate, LoginRequest, Token, UserResponse
 from app.core.security import get_password_hash, verify_password, create_access_token
 from jose import JWTError, jwt
 from fastapi import HTTPException, status
-from datetime import timedelta
+from datetime import timedelta, datetime
 from app.core.security import ACCESS_TOKEN_EXPIRE_MINUTES
 from app.core.security import get_current_user, assentamento_required, juridico_required
 from fastapi.middleware.cors import CORSMiddleware
@@ -26,6 +26,13 @@ from sqlalchemy.orm import Session
 from fastapi import Depends, HTTPException
 from typing import List
 from fastapi import Query
+from fastapi.responses import StreamingResponse
+from reportlab.lib.pagesizes import letter, A4
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.lib.units import inch
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
+from reportlab.lib import colors
+from io import BytesIO
 
 
 app = FastAPI(title=settings.app_name)
@@ -240,3 +247,85 @@ def list_lots_by_district(
         query = query.filter(MunicipalLot.empresa.ilike(like))
 
     return query.order_by(MunicipalLot.empresa).all()
+
+@app.get("/lots/{id}/report")
+def generate_lot_report(
+    id: int,
+    db: Session = Depends(get_auth_db),
+    current_user=Depends(get_current_user),
+):
+    """Gera um relatório em PDF de uma empresa."""
+    lot = db.query(MunicipalLot).filter(MunicipalLot.id == id).first()
+    if not lot:
+        raise HTTPException(status_code=404, detail="Empresa não encontrada.")
+
+    # Criar PDF em memória
+    buffer = BytesIO()
+    doc = SimpleDocTemplate(buffer, pagesize=A4)
+    styles = getSampleStyleSheet()
+    story = []
+
+    # Título
+    title_style = ParagraphStyle(
+        'CustomTitle',
+        parent=styles['Heading1'],
+        fontSize=16,
+    )
+    story.append(Paragraph(f"Relatório - {lot.empresa}", title_style))
+    story.append(Spacer(1, 12))
+
+    # Dados gerais
+    data = [
+        ["Campo", "Valor"],
+        ["Empresa", lot.empresa or "-"],
+        ["CNPJ", lot.cnpj or "-"],
+        ["Município", lot.municipio or "-"],
+        ["Distrito", lot.distrito or "-"],
+        ["Status de assentamento", getattr(lot, "status_de_assentamento", None) or "-"],
+        ["Ramo de atividade", getattr(lot, "ramo_de_atividade", None) or "-"],
+        [
+            "Empregos gerados",
+            str(lot.empregos_gerados) if getattr(lot, "empregos_gerados", None) else "-",
+        ],
+        ["Processo SEI", str(lot.processo_sei) if getattr(lot, "processo_sei", None) else "-"],
+        ["Quadra", str(lot.quadra) if getattr(lot, "quadra", None) else "-"],
+        ["Tamanho (m²)", str(lot.tamanho_m2) if getattr(lot, "tamanho_m2", None) else "-"],
+        ["Matrículas", getattr(lot, "matriculas", None) or "-"],
+        ["Status jurídico", getattr(lot, "status", None) or "-"],
+        ["Assunto judicial", getattr(lot, "assunto_judicial", None) or "-"],
+        ["Observações (assentamento)", getattr(lot, "observacoes", None) or "-"],
+        ["Observações 2", getattr(lot, "observacoes_2", None) or "-"],
+        ["Observações 3", getattr(lot, "observacoes_3", None) or "-"],
+        ["Data do relatório", datetime.now().strftime("%d/%m/%Y")],
+    ]
+
+    table = Table(data, colWidths=[150, 350])
+    table.setStyle(
+        TableStyle(
+            [
+                ('BACKGROUND', (0, 0), (-1, 0), colors.lightgrey),
+                ('TEXTCOLOR', (0, 0), (-1, 0), colors.black),
+                ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+                ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+                ('FONTSIZE', (0, 0), (-1, 0), 10),
+                ('FONTSIZE', (0, 1), (-1, -1), 9),
+                ('BOTTOMPADDING', (0, 0), (-1, 0), 6),
+                ('GRID', (0, 0), (-1, -1), 0.25, colors.black),
+            ]
+        )
+    )
+
+    story.append(table)
+    
+    # Build PDF
+    doc.build(story)
+    buffer.seek(0)
+
+    headers = {
+    "Content-Disposition": f'attachment; filename="relatorio_{lot.empresa}_{datetime.now().strftime("%Y%m%d_%H%M%S")}.pdf"'
+    }
+    return StreamingResponse(
+        buffer,
+        media_type="application/pdf",
+        headers=headers,
+    )
