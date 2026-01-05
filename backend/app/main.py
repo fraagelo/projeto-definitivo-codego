@@ -202,8 +202,11 @@ def update_lot_juridico(
 def create_lot(
     lot_in: MunicipalLotCreate,
     db: Session = Depends(get_auth_db),
-    current_user: UserModel = Depends(assentamento_required),
+    current_user: UserModel = Depends(get_current_user),
 ):
+    if current_user.role not in ("assentamento", "juridico"):
+        raise HTTPException(status_code=403, detail="Sem permissão para criar empresa.")
+
     lot = MunicipalLot(**lot_in.model_dump())
     db.add(lot)
     db.commit()

@@ -1,6 +1,7 @@
 import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "./AuthContext";
 import type { ReactNode } from "react";
+import logoCodego from "./assets/logo-codego.png";
 
 type LayoutProps = {
   children: ReactNode;
@@ -45,7 +46,9 @@ export function Layout({ children }: LayoutProps) {
 
   const juridicoLinks = [
     { to: "/dashboard", label: "Dashboard" },
+    { to: "/lots/new", label: "Cadastrar nova empresa"  },
     { to: "/lots/select", label: "Editar dados jurídicos" },
+    { to: "/reports", label: "Gerar relatório"  },
   ];
 
   const links = user.role === "juridico" ? juridicoLinks : assentamentoLinks;
@@ -81,15 +84,17 @@ export function Layout({ children }: LayoutProps) {
       <div className="flex flex-1">
         {/* Sidebar */}
         <aside className="w-60 bg-slate-900 text-slate-50 flex flex-col">
-          <div className="px-4 py-3 border-b border-slate-800">
-            <h1 className="text-lg font-semibold">CODEGO</h1>
-            <p className="text-xs text-slate-400">
-              {user.role === "assentamento"
-                ? "Módulo Assentamento"
-                : user.role === "juridico"
-                ? "Módulo Jurídico"
-                : "Usuário"}
-            </p>
+          <div className="px-4 py-3 border-b border-slate-800 flex items-center gap-3">
+            <img src={logoCodego} alt="CODEGO"  className="h-8 w-auto"/>
+            <div className="flex flex-col">
+              <span className="text-xs text-slate-400">
+                {user.role === "assentamento"
+                  ? "Módulo Assentamento"
+                  : user.role === "juridico"
+                  ? "Módulo Jurídico"
+                  : "Usuário"}
+              </span>
+            </div>
           </div>
 
           <nav className="flex-1 px-2 py-4 space-y-1 text-sm">
